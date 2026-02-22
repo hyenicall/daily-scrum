@@ -8,7 +8,7 @@
 
 ## 프로젝트 개요
 
-매일 반복되는 데일리 스크럼 작성 비용을 줄이기 위해, 개발자가 작업 내용을 빠르게 기록하면 Claude AI가 자동으로 스크럼 문서를 생성해주는 개인용 워크로그 도구입니다. 슬랙/노션 호환 포맷으로 원클릭 공유까지 지원하여, 스크럼 준비에 소요되는 시간을 하루 5분 이내로 단축하는 것을 목표로 합니다.
+매일 반복되는 데일리 스크럼 작성 비용을 줄이기 위해, 개발자가 작업 내용을 빠르게 기록하면 OpenAI가 자동으로 스크럼 문서를 생성해주는 개인용 워크로그 도구입니다. 슬랙/노션 호환 포맷으로 원클릭 공유까지 지원하여, 스크럼 준비에 소요되는 시간을 하루 5분 이내로 단축하는 것을 목표로 합니다.
 
 ---
 
@@ -40,7 +40,7 @@ gantt
   section Phase 1 (MVP)
   Day 1 - 워크로그 입력 UI    :d1, 2026-02-22, 1d
   Day 2 - 기록 조회 페이지    :d2, after d1, 1d
-  Day 3 - Claude API 연동     :d3, after d2, 1d
+  Day 3 - OpenAI API 연동     :d3, after d2, 1d
   Day 4 - 포맷 선택 & 복사   :d4, after d3, 1d
   Day 5 - 공유 링크           :d5, after d4, 1d
   section Phase 2 (v2)
@@ -60,7 +60,7 @@ gantt
 
 - **저장소:** localStorage (Zustand persist 미들웨어로 자동 직렬화)
 - **상태 관리:** `useWorklogStore` (워크로그), `useScrumStore` (스크럼) 두 스토어로 도메인 분리 — 이미 구현 완료
-- **AI 연동:** Next.js Route Handler(`/api/generate-scrum`)에서 Claude API 호출, 클라이언트에 API 키 노출 방지
+- **AI 연동:** Next.js Route Handler(`/api/generate-scrum`)에서 OpenAI API 호출, 클라이언트에 API 키 노출 방지
 - **공유:** localStorage에 저장된 스크럼을 `shareId`로 조회 — 같은 브라우저 내에서만 유효 [가정: MVP는 단일 기기 사용]
 - **컴포넌트 전략:** Server Component를 기본으로, 사용자 인터랙션이 필요한 영역만 `"use client"` Client Component로 분리
 
@@ -162,26 +162,27 @@ gantt
 
 ---
 
-### Day 3: Claude API 연동 + 스크럼 자동 생성
+### Day 3: OpenAI API 연동 + 스크럼 자동 생성
 
-**목표:** `/scrum` 페이지에서 "스크럼 자동 생성" 버튼 클릭 시, 전날 워크로그를 Claude API에 전송하여 어제 한 일 / 오늘 할 일 초안을 자동 생성한다.
+**목표:** `/scrum` 페이지에서 "스크럼 자동 생성" 버튼 클릭 시, 전날 워크로그를 OpenAI API에 전송하여 어제 한 일 / 오늘 할 일 초안을 자동 생성한다.
 
 #### 구현 항목
 
 **기능 1: API Route Handler - 스크럼 생성 엔드포인트**
 
 - [ ] `src/app/api/generate-scrum/route.ts` 생성 (Server-side)
-  - 구현 방법: Next.js Route Handler로 Claude API (`claude-haiku-4-5`) 호출
+  - 구현 방법: Next.js Route Handler로 OpenAI API (`gpt-4o-mini`) 호출
   - 요청 바디: `{ workItems: WorkItem[], format: ScrumFormat }`
-  - 프롬프트 구성: 워크로그 항목을 마크다운 목록으로 변환 → Claude에 전송
+  - 프롬프트 구성: 워크로그 항목을 마크다운 목록으로 변환 → OpenAI에 전송
   - 응답: `{ yesterday: string[], today: string[], blocker: string }` JSON 반환
-  - 환경변수: `ANTHROPIC_API_KEY` (`.env.local`에 설정)
+  - 환경변수: `OPENAI_API_KEY` (`.env.local`에 설정)
   - 관련 파일: `types/index.ts` (WorkItem, ScrumFormat 타입 활용)
 
 ```typescript
 // 프롬프트 구조 예시
 // 시스템: "당신은 개발자의 워크로그를 데일리 스크럼 형식으로 요약하는 도우미입니다."
 // 사용자: "다음 작업 항목을 바탕으로 어제 한 일, 오늘 할 일, 블로커를 JSON 형식으로 작성해주세요."
+// response_format: { type: "json_object" } 사용으로 안정적인 JSON 파싱
 ```
 
 **기능 2: Zod 스키마 - API 요청/응답 검증**
@@ -214,21 +215,33 @@ gantt
 - [ ] `src/app/scrum/page.tsx` 업데이트
   - `ScrumGenerator` Client Component 삽입
 
+#### 🧪 테스트 (Playwright MCP — 필수)
+
+- [ ] `pnpm dev` 실행 후 Playwright MCP로 `/scrum` 페이지 접근
+  - `browser_navigate` → `http://localhost:3000/scrum`
+  - `browser_snapshot`으로 초기 상태 확인
+- [ ] "스크럼 자동 생성" 버튼 클릭 후 로딩 스피너 → 결과 표시 흐름 검증
+  - `browser_click` (생성 버튼) → `browser_wait_for` (결과 텍스트) → `browser_snapshot`
+  - 성공 조건: 어제 한 일 / 오늘 할 일 항목이 1개 이상 렌더링됨
+- [ ] OpenAI API 오류 시나리오 (환경변수 미설정) 에러 메시지 표시 확인
+  - 성공 조건: `toast.error()` 메시지가 화면에 노출됨
+
 #### 완료 기준 (Definition of Done)
 
 - [ ] "스크럼 자동 생성" 버튼 클릭 시 로딩 스피너 표시
-- [ ] Claude API 응답으로 어제 한 일 / 오늘 할 일 목록 자동 채워짐
+- [ ] OpenAI API 응답으로 어제 한 일 / 오늘 할 일 목록 자동 채워짐
 - [ ] 생성된 내용 인라인 수정 가능
 - [ ] API 오류 시 `toast.error()`로 에러 메시지 표시
 - [ ] 전날 워크로그 없을 때 `EmptyState` 안내 표시
-- [ ] `ANTHROPIC_API_KEY` 환경변수 누락 시 명확한 서버 에러 반환
+- [ ] `OPENAI_API_KEY` 환경변수 누락 시 명확한 서버 에러 반환
+- [ ] **Playwright MCP E2E 테스트 통과** (스크럼 생성 흐름 전체)
 - [ ] `pnpm build` 통과
 
 #### 기술적 리스크
 
 | 리스크 | 영향도 | 대응 방안 |
 |--------|--------|----------|
-| Claude API 응답이 JSON 형식이 아닐 경우 파싱 실패 | 높음 | `generateScrumResponseSchema`로 응답 검증, 실패 시 재시도 로직 또는 에러 안내 |
+| OpenAI API 응답이 JSON 형식이 아닐 경우 파싱 실패 | 높음 | `response_format: { type: "json_object" }` 옵션으로 JSON 강제, `generateScrumResponseSchema`로 추가 검증 |
 | API 키 미설정으로 빌드/런타임 오류 | 중간 | Route Handler 진입 시 환경변수 존재 여부 사전 체크 |
 | 워크로그 항목이 너무 많아 토큰 초과 | 낮음 | 항목 수 20개 이하로 제한 [가정], 초과 시 경고 표시 |
 
@@ -280,12 +293,22 @@ gantt
   - 구현 방법: `FormatSelector` + 포맷 렌더링 결과 `<pre>` 태그 표시 + `CopyButton` 조합
   - 선택된 포맷에 따라 `formatAsSlack()` 또는 `formatAsMarkdown()` 결과 렌더링
 
+#### 🧪 테스트 (Playwright MCP — 필수)
+
+- [ ] `/scrum` 페이지에서 포맷 탭 전환 및 클립보드 복사 흐름 검증
+  - `browser_navigate` → `http://localhost:3000/scrum`
+  - `browser_click` (슬랙 탭) → `browser_snapshot`으로 슬랙 포맷 렌더링 확인
+  - `browser_click` (마크다운 탭) → `browser_snapshot`으로 마크다운 포맷 렌더링 확인
+  - `browser_click` (복사 버튼) → `browser_snapshot`으로 `toast.success()` 노출 확인
+  - 성공 조건: 탭 전환 시 미리보기 내용이 즉시 변경되고, 복사 알림이 표시됨
+
 #### 완료 기준 (Definition of Done)
 
 - [ ] 슬랙/마크다운 탭 전환 시 미리보기 즉시 변경
 - [ ] "복사" 버튼 클릭 후 `toast.success()` 알림 표시
 - [ ] 복사된 텍스트를 슬랙에 붙여넣었을 때 포맷 정상 확인
 - [ ] 복사된 텍스트를 노션에 붙여넣었을 때 마크다운 렌더링 정상 확인 [가정: 수동 검증]
+- [ ] **Playwright MCP E2E 테스트 통과** (포맷 전환 + 복사 흐름)
 - [ ] 모바일 및 다크모드 정상 표시
 - [ ] `pnpm build` 통과
 
@@ -323,12 +346,26 @@ gantt
 - [ ] `components/scrum/scrum-output.tsx`에 `ShareButton` 추가
   - 스크럼이 생성된 후에만 공유 버튼 활성화
 
+#### 🧪 테스트 (Playwright MCP — 필수)
+
+- [ ] 공유 링크 생성 → 접근 → 읽기 전용 확인 흐름 검증
+  - `browser_navigate` → `http://localhost:3000/scrum`
+  - `browser_click` (공유 링크 복사 버튼) → `browser_snapshot`으로 `toast.success()` 확인
+  - `browser_evaluate`로 클립보드에서 shareId 추출
+  - `browser_navigate` → `/share/[shareId]` 접근
+  - `browser_snapshot`으로 스크럼 내용 표시 및 편집 불가 확인
+  - 성공 조건: 스크럼 내용이 읽기 전용으로 정상 표시됨
+- [ ] 존재하지 않는 shareId 접근 시 EmptyState 표시 확인
+  - `browser_navigate` → `/share/invalid-id`
+  - `browser_snapshot`으로 EmptyState 렌더링 확인
+
 #### 완료 기준 (Definition of Done)
 
 - [ ] "공유 링크 복사" 버튼 클릭 시 `/share/[shareId]` URL이 클립보드에 복사
 - [ ] 공유 링크 접근 시 스크럼 내용 정상 표시 (같은 브라우저/기기)
 - [ ] 스크럼이 없는 shareId 접근 시 `EmptyState` 표시
 - [ ] 공유 페이지에서 편집 불가 (읽기 전용) 확인
+- [ ] **Playwright MCP E2E 테스트 통과** (공유 링크 생성 → 접근 → 읽기 전용 흐름)
 - [ ] 모바일 및 다크모드 정상 표시
 - [ ] `pnpm build` 통과
 
@@ -349,7 +386,8 @@ gantt
 - [ ] TypeScript strict 모드, `any` 타입 없음
 - [ ] 모든 페이지 모바일(375px) 반응형 레이아웃 정상
 - [ ] 모든 페이지 다크모드 정상 표시
-- [ ] `ANTHROPIC_API_KEY` 환경변수 설정 가이드 README 업데이트
+- [ ] Day 3, 4, 5 Playwright MCP E2E 테스트 전체 통과
+- [ ] `OPENAI_API_KEY` 환경변수 설정 가이드 README 업데이트
 
 ---
 
@@ -370,7 +408,7 @@ gantt
 
 #### 주간 회고 자동 생성
 - [ ] `/weekly` 페이지 신규 생성
-- [ ] 주간 워크로그 집계 후 Claude API로 회고 요약 생성
+- [ ] 주간 워크로그 집계 후 OpenAI API로 회고 요약 생성
 
 #### Supabase 연동 (데이터 영속성)
 - [ ] `stores/use-worklog-store.ts`, `stores/use-scrum-store.ts` persist 전략을 localStorage → Supabase로 마이그레이션
@@ -401,7 +439,7 @@ gantt
 │       │       └── page.tsx             # [업데이트] SharedScrumView 삽입
 │       └── api/
 │           └── generate-scrum/
-│               └── route.ts             # [신규] Claude API Route Handler
+│               └── route.ts             # [신규] OpenAI API Route Handler
 ├── components/
 │   ├── worklog/                         # [신규 폴더]
 │   │   ├── work-item-form.tsx           # 작업 추가/수정 폼
@@ -464,7 +502,8 @@ graph TD
 | 카테고리 | 기술 | 결정 이유 |
 |---------|------|----------|
 | 프레임워크 | Next.js 16.1.6 (App Router) | Server Component + Route Handler로 AI API 키 서버사이드 보호 |
-| AI 모델 | Claude API `claude-haiku-4-5` | 빠른 응답 속도 + 저렴한 비용, 스크럼 요약 태스크에 충분한 성능 |
+| AI 모델 | OpenAI API `gpt-4o-mini` | 빠른 응답 속도 + 저렴한 비용, `response_format: json_object`로 안정적인 JSON 파싱 |
+| 테스트 도구 | Playwright MCP | API 연동 및 비즈니스 로직 E2E 테스트, 브라우저 자동화 |
 | 저장소 (MVP) | localStorage + Zustand persist | 백엔드 없이 MVP 빠른 구현, Supabase 마이그레이션 용이 |
 | 상태 관리 | Zustand 5 | 보일러플레이트 최소, persist 미들웨어로 localStorage 자동 연동 |
 | 폼 검증 | React Hook Form 7 + Zod 4 | 선언적 스키마 기반 검증, TypeScript 타입 추론 자동화 |
@@ -478,12 +517,12 @@ graph TD
 
 | 변수명 | 필수 여부 | 설명 |
 |--------|---------|------|
-| `ANTHROPIC_API_KEY` | 필수 (Day 3부터) | Claude API 인증 키 |
+| `OPENAI_API_KEY` | 필수 (Day 3부터) | OpenAI API 인증 키 |
 
 `.env.local` 파일에 설정:
 
 ```bash
-ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
 ```
 
 ---
@@ -509,7 +548,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 | 공유 링크 유효 범위 | 같은 브라우저/기기에서만 유효 (localStorage 한계) | v1에서 이 제약을 수용할지 여부 |
 | 워크로그 항목 최대 수 | 날짜당 20개 이하 | Claude API 토큰 한도 고려 실제 최대치 결정 필요 |
 | 날짜 기준 "전날" 정의 | 오늘 날짜 기준 -1일 (주말 미고려) | 금요일 → 월요일 스크럼 시 목요일 기준인지 금요일 기준인지 |
-| Claude API 스트리밍 | 단건 응답 (streaming 미사용) | 응답 지연 시 스트리밍 적용 여부 |
+| OpenAI API 스트리밍 | 단건 응답 (streaming 미사용) | 응답 지연 시 스트리밍 적용 여부 |
 | 스크럼 format 기본값 | `"slack"` | 사용자 마지막 선택값 유지 여부 |
 
 ---
@@ -519,3 +558,4 @@ ANTHROPIC_API_KEY=sk-ant-...
 | 날짜 | 버전 | 변경 내용 | 작성자 |
 |------|-----|----------|-------|
 | 2026-02-22 | 1.0 | 초기 작성 (PRD v1.0 기반) | PM |
+| 2026-02-22 | 1.1 | OpenAI API로 변경, Playwright MCP 테스트 섹션 추가 | PM |
