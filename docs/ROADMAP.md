@@ -38,11 +38,12 @@ gantt
   title 데일리 스크럼 자동 생성기 로드맵
   dateFormat YYYY-MM-DD
   section Phase 1 (MVP)
-  Day 1 - 워크로그 입력 UI    :d1, 2026-02-22, 1d
-  Day 2 - 기록 조회 페이지    :d2, after d1, 1d
-  Day 3 - OpenAI API 연동     :d3, after d2, 1d
-  Day 4 - 포맷 선택 & 복사   :d4, after d3, 1d
-  Day 5 - 공유 링크           :d5, after d4, 1d
+  Day 0 - 애플리케이션 골격 구축  :d0, 2026-02-22, 1d
+  Day 1 - 워크로그 입력 UI         :d1, after d0, 1d
+  Day 2 - 기록 조회 페이지         :d2, after d1, 1d
+  Day 3 - OpenAI API 연동          :d3, after d2, 1d
+  Day 4 - 포맷 선택 & 복사        :d4, after d3, 1d
+  Day 5 - 공유 링크                :d5, after d4, 1d
   section Phase 2 (v2)
   슬랙 웹훅 직접 전송         :2026-03-01, 5d
   주간 회고 자동 생성         :2026-03-06, 5d
@@ -63,6 +64,110 @@ gantt
 - **AI 연동:** Next.js Route Handler(`/api/generate-scrum`)에서 OpenAI API 호출, 클라이언트에 API 키 노출 방지
 - **공유:** localStorage에 저장된 스크럼을 `shareId`로 조회 — 같은 브라우저 내에서만 유효 [가정: MVP는 단일 기기 사용]
 - **컴포넌트 전략:** Server Component를 기본으로, 사용자 인터랙션이 필요한 영역만 `"use client"` Client Component로 분리
+
+---
+
+### Day 0: 애플리케이션 골격 구축
+
+**목표:** 개발에 필요한 프로젝트 기반 구조를 모두 갖춘다. 모든 페이지 라우트가 에러 없이 로드되고, 레이아웃 / 공통 컴포넌트 / 상태 관리 / 타입 / 폼 스키마가 준비된 상태에서 Day 1 작업을 즉시 착수할 수 있다.
+
+#### 구현 항목
+
+**1. 프로젝트 초기 설정**
+
+- [x] Next.js 16.1.6 (App Router) + TypeScript 5 프로젝트 생성
+  - 관련 파일: `tsconfig.json`, `next.config.ts`, `package.json`
+- [x] `@/*` 경로 별칭 설정 (`tsconfig.json` → `paths`)
+- [x] ESLint 설정 (`eslint.config.mjs`)
+- [x] pnpm 패키지 매니저 사용
+
+**2. UI 기반 설정**
+
+- [x] Tailwind CSS v4 설치 및 설정 (`src/app/globals.css`)
+- [x] shadcn/ui 설치 및 컴포넌트 추가
+  - 설치된 컴포넌트: `accordion`, `alert-dialog`, `alert`, `avatar`, `badge`, `button`, `card`, `checkbox`, `dialog`, `dropdown-menu`, `form`, `input`, `label`, `popover`, `select`, `separator`, `sheet`, `skeleton`, `switch`, `table`, `tabs`, `textarea`, `tooltip`, `sonner`
+  - 관련 파일: `components/ui/` 디렉토리 전체
+- [x] next-themes 설치 (`ThemeProvider` 설정 완료)
+- [x] Sonner 2 설치 (`Toaster` 루트에 등록 완료)
+- [x] Lucide React, usehooks-ts 설치
+
+**3. 레이아웃 구성**
+
+- [x] `src/app/layout.tsx` — RootLayout (ThemeProvider, SiteHeader, SiteFooter 포함, `lang="ko"`)
+- [x] `components/layout/site-header.tsx` — 로고, 네비게이션, 테마 토글
+- [x] `components/layout/site-footer.tsx` — 저작권 영역
+- [x] `components/layout/container.tsx` — 반응형 컨테이너 (`max-w-screen-xl`, `size` prop)
+- [x] `components/layout/main-nav.tsx` — 데스크톱 네비게이션 (`usePathname` 활성 링크 감지)
+- [x] `components/layout/mobile-nav.tsx` — Sheet 기반 모바일 사이드바
+- [x] `components/theme-toggle.tsx` — 다크모드 토글 버튼
+- [x] `components/providers.tsx` — `ThemeProvider > TooltipProvider > children + Toaster` 구조
+
+**4. 페이지 라우트 기본 구조 (플레이스홀더)**
+
+- [x] `src/app/page.tsx` — 홈 (EmptyState 플레이스홀더, metadata 포함)
+- [x] `src/app/scrum/page.tsx` — 스크럼 생성 (EmptyState 플레이스홀더, metadata 포함)
+- [x] `src/app/history/page.tsx` — 기록 조회 (EmptyState 플레이스홀더, metadata 포함)
+- [x] `src/app/share/[id]/page.tsx` — 공유 페이지 (EmptyState 플레이스홀더, params await 처리 완료)
+- [x] `src/app/not-found.tsx` — 커스텀 404 페이지
+- [ ] `src/app/api/generate-scrum/route.ts` — OpenAI API Route Handler (Day 3에 구현)
+
+**5. 공통 UI 컴포넌트**
+
+- [x] `components/ui/empty-state.tsx` — 빈 상태 표시 (`icon`, `title`, `description`, `action` props)
+- [x] `components/ui/spinner.tsx` — 로딩 인디케이터 (`size`: sm/md/lg)
+- [x] `components/ui/confirm-dialog.tsx` — 확인 다이얼로그 (`variant`: default/destructive)
+- [x] `components/ui/stat-card.tsx` — 통계 수치 카드 (`title`, `value`, `icon`, `trend` props)
+- [x] `components/ui/password-input.tsx` — 비밀번호 표시/숨기기 토글 입력
+- [x] `components/ui/search-input.tsx` — 검색어 입력 + 지우기 버튼
+- [x] `hooks/use-confirm.tsx` — Promise 기반 확인 다이얼로그 훅 (`[dialog, confirm]` 튜플 반환)
+
+**6. 도메인 타입 정의**
+
+- [x] `types/index.ts` — 전체 도메인 타입 완료
+  - `WorkTag`, `WorkStatus`, `WorkItem`, `WorkLog`
+  - `ScrumFormat`, `DailyScrum`
+  - `NavItem`, `SiteConfig`
+  - `WORK_TAG_LABELS`, `WORK_STATUS_LABELS`, `WORK_TAGS`, `WORK_STATUSES` 상수
+
+**7. 상태 관리 초기화**
+
+- [x] `stores/use-worklog-store.ts` — `useWorklogStore` Zustand 스토어
+  - localStorage persist (`"daily-scrum-worklogs"` 키)
+  - 액션: `ensureWorkLog`, `addWorkItem`, `updateWorkItem`, `deleteWorkItem`, `reorderWorkItems`
+- [x] `stores/use-scrum-store.ts` — `useScrumStore` Zustand 스토어
+  - localStorage persist (`"daily-scrum-scrums"` 키)
+  - 액션: `saveScrum`, `updateScrumField`, `deleteScrum`, `applyGeneratedScrum`, `setGenerating`, `setGenerateError`
+  - 조회: `getScrum`, `getScrumByShareId`
+
+**8. 폼 검증 스키마**
+
+- [x] `lib/validations/worklog.ts` — Zod v4 스키마 (`import { z } from "zod/v4"`)
+  - `workItemSchema`: content(최대 500자), tag(enum), status(enum)
+  - `scrumEditSchema`: yesterday(array), today(array), blocker, format
+  - `WorkItemFormValues`, `ScrumEditFormValues` 타입 export
+- [ ] `lib/validations/scrum.ts` — API 요청/응답 검증 스키마 (Day 3에 구현)
+
+**9. 사이트 설정**
+
+- [x] `config/site.ts` — `siteConfig` 객체
+  - `name`: "데일리 스크럼"
+  - `mainNav`: 3개 메뉴 (오늘의 워크로그 `/`, 스크럼 생성 `/scrum`, 기록 조회 `/history`)
+  - `links.github` 등록
+
+**10. 환경변수 설정**
+
+- [x] `.env.local.example` 템플릿 생성
+- [ ] `.env.local.example`의 `ANTHROPIC_API_KEY`를 `OPENAI_API_KEY`로 수정 필요
+  - 현재 파일에 `ANTHROPIC_API_KEY=` 로 잘못 기재되어 있음
+  - `OPENAI_API_KEY=sk-...` 로 변경 후 `.env.local` 복사 안내
+
+#### 완료 기준 (Definition of Done)
+
+- [x] `pnpm dev` 실행 시 `/`, `/scrum`, `/history`, `/share/[id]` 모든 페이지가 에러 없이 로드됨
+- [x] 레이아웃(헤더/푸터)이 모든 페이지에서 렌더링됨
+- [x] 다크모드 토글 버튼 클릭 시 테마 전환 동작
+- [x] TypeScript 컴파일 에러 없음 (`pnpm build` 통과)
+- [ ] `.env.local.example`의 API 키 변수명을 `OPENAI_API_KEY`로 수정
 
 ---
 
@@ -559,3 +664,4 @@ OPENAI_API_KEY=sk-...
 |------|-----|----------|-------|
 | 2026-02-22 | 1.0 | 초기 작성 (PRD v1.0 기반) | PM |
 | 2026-02-22 | 1.1 | OpenAI API로 변경, Playwright MCP 테스트 섹션 추가 | PM |
+| 2026-02-22 | 1.2 | Day 0 (애플리케이션 골격 구축) 섹션 추가, 기존 구현 상태 체크 반영 | PM |
