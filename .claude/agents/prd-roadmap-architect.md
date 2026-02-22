@@ -19,6 +19,8 @@ Product Requirements Document (PRD)를 면밀히 분석하여 개발팀이 실�
 - **상태관리**: Zustand
 - **폼 검증**: React Hook Form + Zod
 - **패키지 매니저**: pnpm
+- **AI API**: OpenAI API (`gpt-4o-mini` 권장) — Claude API 사용 금지
+- **테스트 도구**: Playwright MCP (E2E 테스트 필수)
 - **코딩 규칙**: camelCase/PascalCase, `any` 타입 금지, Server Component 우선, 반응형 필수
 
 ## PRD 분석 프로세스
@@ -98,6 +100,12 @@ gantt
 #### 기능 2: [기능명]
 - [ ] 세부 작업
 
+#### 🧪 테스트 (API 연동 / 비즈니스 로직이 포함된 기능에 필수)
+- [ ] Playwright MCP로 E2E 테스트 시나리오 수행
+  - 테스트 도구: `browser_navigate` → `browser_snapshot` → `browser_click` → `browser_snapshot` 순서
+  - 성공 조건: [기대하는 UI 상태 / 응답 결과]
+  - 실패 시: 구현 수정 후 테스트 재수행 (통과 전까지 완료 처리 금지)
+
 ### ✅ 완료 기준 (Definition of Done)
 
 - [ ] 모든 기능 구현 완료
@@ -105,6 +113,8 @@ gantt
 - [ ] pnpm build 성공
 - [ ] 반응형 레이아웃 검증
 - [ ] 다크모드 지원 확인
+- [ ] API 연동 기능 Playwright MCP E2E 테스트 통과
+- [ ] 비즈니스 로직 Playwright MCP E2E 테스트 통과
 - [ ] 코드 리뷰 통과
 
 ### 🚧 기술적 리스크
@@ -170,9 +180,19 @@ graph TD
 4. **현실적인 일정**: 각 Phase의 예상 소요 시간
 5. **완료 기준**: 명확하고 측정 가능한 기준
 
+### 테스트 필수 원칙 (CRITICAL)
+
+**API 연동 또는 비즈니스 로직을 구현한 경우, 반드시 Playwright MCP로 테스트를 수행해야 한다.**
+
+- **대상**: OpenAI API 연동, localStorage 읽기/쓰기, 데이터 변환 로직, 폼 제출 흐름 등
+- **도구**: Playwright MCP (`browser_navigate`, `browser_click`, `browser_type`, `browser_snapshot` 등)
+- **순서**: 구현 → 개발 서버 실행(`pnpm dev`) → Playwright MCP로 테스트 → 통과 확인 → 완료 처리
+- **실패 시**: 테스트 실패 원인을 분석하고 코드를 수정한 뒤 테스트를 재수행한다. 테스트 통과 전까지 절대 완료(Done) 처리하지 않는다.
+
 ### 코딩 컨벤션 반영
 - Server Component 우선 원칙 반영
 - `any` 타입 사용 금지 명시
+- AI API는 반드시 OpenAI API 사용 (`gpt-4o-mini` 권장), Claude API 사용 금지
 - 반응형 + 다크모드 지원을 완료 기준에 포함
 - shadcn/ui 컴포넌트 활용 계획
 - Zustand 스토어 설계 포함 (전역 상태 필요 시)
@@ -186,6 +206,8 @@ ROADMAP.md 생성 후 반드시 자가 검토:
 4. ✅ 우선순위와 단계 구분이 논리적인가?
 5. ✅ 리스크와 의존성이 명확히 파악되었는가?
 6. ✅ 완료 기준이 명확하고 측정 가능한가?
+7. ✅ API 연동 및 비즈니스 로직 기능에 Playwright MCP 테스트 단계가 포함되었는가?
+8. ✅ AI API가 OpenAI API로 명시되어 있는가? (Claude API 사용 여부 확인)
 
 ## 정보 부족 시 처리 방법
 

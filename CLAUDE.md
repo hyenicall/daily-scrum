@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-Next.js 16.1.6 + React 19.2.3 + Tailwind CSS v4 + shadcn/ui 기반의 모던 웹 스타터킷입니다.
+**데일리 워크로그 & 스크럼 자동 생성기** — 개발자가 퇴근 전 작업 내용을 빠르게 기록하면 OpenAI가 자동으로 데일리 스크럼 문서를 생성해주는 개인용 도구입니다. 슬랙/노션 호환 포맷 선택, 원클릭 공유 링크 생성을 지원합니다.
+
+> 개발 단계별 태스크 및 완료 기준은 **[docs/ROADMAP.md](./docs/ROADMAP.md)** 를 참고하세요.
 
 **주요 기술 스택:**
 - Next.js 16.1.6 (App Router)
@@ -12,8 +14,9 @@ Next.js 16.1.6 + React 19.2.3 + Tailwind CSS v4 + shadcn/ui 기반의 모던 웹
 - TypeScript 5
 - Tailwind CSS v4
 - shadcn/ui 컴포넌트
-- Zustand 5.0.11 (상태 관리)
+- Zustand 5.0.11 (상태 관리, localStorage persist)
 - React Hook Form 7 + Zod 4 (폼 검증)
+- OpenAI API `gpt-4o-mini` (스크럼 자동 생성)
 - next-themes (다크모드)
 - Sonner 2 (토스트 알림)
 - Lucide React (아이콘)
@@ -41,40 +44,77 @@ pnpm lint
 
 ```
 프로젝트 루트/
-├── src/app/                # Next.js App Router 페이지
-│   ├── layout.tsx         # 루트 레이아웃 (ThemeProvider, Header/Footer)
-│   ├── page.tsx           # 홈 페이지
-│   ├── not-found.tsx      # 커스텀 404 페이지
-│   ├── about/             # About 페이지
-│   └── blog/              # Blog 페이지
-├── components/            # React 컴포넌트
-│   ├── ui/                # shadcn/ui 기반 재사용 컴포넌트
-│   ├── layout/            # 레이아웃 컴포넌트
-│   │   ├── site-header.tsx    # 헤더
-│   │   ├── site-footer.tsx    # 푸터
-│   │   ├── container.tsx      # 반응형 컨테이너
-│   │   ├── main-nav.tsx       # 데스크톱 네비게이션
-│   │   └── mobile-nav.tsx     # 모바일 네비게이션
-│   ├── providers.tsx      # Context Providers
-│   └── theme-toggle.tsx   # 테마 토글 버튼
-├── config/                # 애플리케이션 설정
-│   └── site.ts            # 사이트 메타데이터 및 네비게이션 설정
-├── lib/                   # 유틸리티 라이브러리
-│   └── validations/       # Zod 검증 스키마
-├── stores/                # Zustand 상태 관리 스토어
-├── hooks/                 # 커스텀 React 훅
-│   └── use-confirm.tsx    # Promise 기반 확인 다이얼로그 훅
-├── types/                 # TypeScript 타입 정의
-├── public/                # 정적 파일
-├── .claude/               # Claude Code 설정
-│   ├── agents/            # 커스텀 에이전트
-│   │   └── code-reviewer.md
-│   ├── commands/          # 커스텀 커맨드
-│   │   ├── review.md      # /review 커맨드
-│   │   └── git/commit.md  # /git:commit 커맨드
-│   └── hooks/             # 이벤트 훅
+├── src/
+│   └── app/                     # Next.js App Router 페이지
+│       ├── layout.tsx            # 루트 레이아웃 (ThemeProvider, Header/Footer)
+│       ├── page.tsx              # 홈 — 오늘의 워크로그 입력
+│       ├── not-found.tsx         # 커스텀 404 페이지
+│       ├── scrum/
+│       │   └── page.tsx          # 스크럼 생성 & 미리보기 & 공유
+│       ├── history/
+│       │   └── page.tsx          # 날짜별 워크로그 기록 조회
+│       ├── share/
+│       │   └── [id]/
+│       │       └── page.tsx      # 공유 링크 (읽기 전용, 로그인 불필요)
+│       └── api/
+│           └── generate-scrum/
+│               └── route.ts      # OpenAI API Route Handler
+├── components/
+│   ├── ui/                       # shadcn/ui 기반 재사용 컴포넌트
+│   ├── layout/                   # 레이아웃 컴포넌트
+│   │   ├── site-header.tsx
+│   │   ├── site-footer.tsx
+│   │   ├── container.tsx
+│   │   ├── main-nav.tsx
+│   │   └── mobile-nav.tsx
+│   ├── worklog/                  # 워크로그 입력 관련 컴포넌트
+│   │   ├── work-item-form.tsx    # 작업 추가/수정 폼
+│   │   ├── work-item-card.tsx    # 개별 작업 항목 카드
+│   │   ├── work-item-badge.tsx   # 태그/상태 Badge
+│   │   ├── worklog-list.tsx      # 작업 목록
+│   │   └── date-selector.tsx     # 날짜 선택기
+│   ├── history/                  # 기록 조회 관련 컴포넌트
+│   │   ├── history-list.tsx
+│   │   └── history-day-card.tsx
+│   ├── scrum/                    # 스크럼 생성/출력 관련 컴포넌트
+│   │   ├── scrum-generator.tsx
+│   │   ├── scrum-preview.tsx
+│   │   ├── scrum-output.tsx
+│   │   ├── format-selector.tsx
+│   │   ├── copy-button.tsx
+│   │   └── share-button.tsx
+│   ├── share/                    # 공유 페이지 관련 컴포넌트
+│   │   └── shared-scrum-view.tsx
+│   ├── providers.tsx
+│   └── theme-toggle.tsx
+├── config/
+│   └── site.ts                   # 사이트 메타데이터 및 네비게이션 설정
+├── lib/
+│   ├── scrum-formatter.ts         # 슬랙/마크다운 포맷 변환 유틸
+│   └── validations/
+│       ├── worklog.ts             # workItemSchema (완료)
+│       └── scrum.ts              # API 요청/응답 Zod 스키마
+├── stores/
+│   ├── use-worklog-store.ts       # 워크로그 Zustand 스토어 (완료)
+│   └── use-scrum-store.ts        # 스크럼 Zustand 스토어 (완료)
+├── hooks/
+│   └── use-confirm.tsx           # Promise 기반 확인 다이얼로그 훅
+├── types/
+│   └── index.ts                  # WorkLog, WorkItem, DailyScrum 타입 (완료)
+├── docs/
+│   ├── PRD.md                    # 제품 요구사항 문서
+│   └── ROADMAP.md                # 개발 로드맵 (Day 1~5 마일스톤)
+├── public/
+├── .claude/
+│   ├── agents/
+│   │   ├── code-reviewer.md
+│   │   └── prd-roadmap-architect.md
+│   ├── commands/
+│   │   ├── review.md
+│   │   └── git/commit.md
+│   └── hooks/
 │       └── slack-notify.sh
-└── .mcp.json              # MCP 서버 설정
+└── .mcp.json                     # MCP 서버 설정
 ```
 
 ### 경로 별칭
@@ -250,7 +290,7 @@ next-themes를 사용하여 다크모드를 지원합니다.
 
 프로젝트에 다음 MCP 서버가 설정되어 있습니다:
 
-- **playwright**: E2E 테스팅 및 브라우저 자동화
+- **playwright**: E2E 테스팅 및 브라우저 자동화 — **API 연동 / 비즈니스 로직 구현 후 필수 사용**
 - **context7**: 라이브러리 문서 검색 (최신 API 참조)
 - **sequential-thinking**: 복잡한 문제 단계별 추론
 - **shadcn**: shadcn/ui 컴포넌트 관리 및 설치
@@ -260,10 +300,10 @@ next-themes를 사용하여 다크모드를 지원합니다.
 - `/review`: 브랜치 머지 전 코드 품질 검증 (lint, build, AI 리뷰)
 - `/git:commit`: 이모지 컨벤셔널 커밋 포맷으로 커밋 메시지 생성
 
-### 코드 리뷰어 에이전트 (.claude/agents/code-reviewer.md)
+### 커스텀 에이전트 (.claude/agents/)
 
-구현 완료 후 자동으로 코드 리뷰를 실행하는 에이전트입니다.
-TypeScript 타입 안전성, 접근성, 다크모드, 반응형 등을 체크합니다.
+- **code-reviewer**: 구현 완료 후 자동으로 코드 리뷰를 실행합니다. TypeScript 타입 안전성, 접근성, 다크모드, 반응형 등을 체크합니다.
+- **prd-roadmap-architect**: PRD를 분석하여 ROADMAP.md를 생성/갱신합니다. OpenAI API 사용 및 Playwright MCP 테스트 원칙이 반영되어 있습니다.
 
 ### Slack 알림 훅 (.claude/hooks/slack-notify.sh)
 
@@ -308,9 +348,45 @@ export const metadata: Metadata = {
 }
 ```
 
+## 테스트 원칙
+
+**API 연동 또는 비즈니스 로직을 구현한 경우, 반드시 Playwright MCP로 E2E 테스트를 수행해야 합니다.**
+
+| 대상 | 테스트 필수 여부 |
+|------|--------------|
+| OpenAI API 연동 (`/api/generate-scrum`) | 필수 |
+| 포맷 변환 로직 (`lib/scrum-formatter.ts`) | 필수 |
+| 공유 링크 생성 & 조회 | 필수 |
+| UI 컴포넌트 (폼, 카드 등) | 권장 |
+
+**Playwright MCP 테스트 흐름:**
+```
+pnpm dev 실행
+→ browser_navigate (테스트 대상 페이지)
+→ browser_snapshot (초기 상태 확인)
+→ browser_click / browser_type (인터랙션)
+→ browser_snapshot (결과 확인)
+→ 성공 조건 충족 시 완료 처리
+```
+
+> 테스트 통과 전까지 해당 기능을 완료(Done)로 처리하지 않습니다.
+
+## 환경변수
+
+| 변수명 | 필수 여부 | 설명 |
+|--------|---------|------|
+| `OPENAI_API_KEY` | 필수 (Day 3부터) | OpenAI API 인증 키 |
+
+`.env.local` 파일에 설정:
+
+```bash
+OPENAI_API_KEY=sk-...
+```
+
 ## 주의사항
 
 - **포트 충돌:** 개발 서버 실행 시 3000번 포트가 사용 중이면 자동으로 3001번 포트 사용
 - **Fast Refresh:** 파일 저장 시 자동으로 브라우저 업데이트
 - **TypeScript 에러:** `pnpm build` 전에 타입 에러 해결 필수
 - **404 페이지:** `src/app/not-found.tsx`가 모든 정의되지 않은 경로에서 표시됨
+- **AI API:** Claude API 사용 금지 — 반드시 OpenAI API (`gpt-4o-mini`) 사용
