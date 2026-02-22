@@ -17,6 +17,7 @@ import {
 import { WorkItemCard } from "./work-item-card"
 import { WorkItemForm } from "./work-item-form"
 import { DateSelector } from "./date-selector"
+import { NotionSync } from "./notion-sync"
 import type { WorkItemFormValues } from "@/lib/validations/worklog"
 
 export function WorklogList() {
@@ -94,6 +95,11 @@ export function WorklogList() {
           ))}
         </div>
       )}
+
+      {/* Notion 연동 버튼 영역 */}
+      <div className="border-t pt-4">
+        <NotionSync date={selectedDate} items={items} />
+      </div>
     </div>
   )
 }
