@@ -1,10 +1,7 @@
 import type { Metadata } from "next"
-import { Bot, Sparkles } from "lucide-react"
-import Link from "next/link"
 
 import { Container } from "@/components/layout/container"
-import { EmptyState } from "@/components/ui/empty-state"
-import { Button } from "@/components/ui/button"
+import { ScrumGenerator } from "@/components/scrum/scrum-generator"
 
 export const metadata: Metadata = {
   title: "스크럼 생성 | 데일리 스크럼",
@@ -22,25 +19,8 @@ export default function ScrumPage() {
         </p>
       </div>
 
-      {/* 스크럼 생성 영역 - 추후 ScrumGenerator 클라이언트 컴포넌트로 교체 */}
-      <EmptyState
-        icon={Bot}
-        title="워크로그를 먼저 입력해주세요"
-        description="오늘의 작업을 기록한 후 AI 스크럼 자동 생성을 사용할 수 있습니다"
-        action={
-          <div className="flex flex-col items-center gap-3 sm:flex-row">
-            <Button asChild>
-              <Link href="/">
-                워크로그 입력하러 가기
-              </Link>
-            </Button>
-            <Button variant="outline" disabled>
-              <Sparkles className="mr-2 size-4" />
-              스크럼 자동 생성
-            </Button>
-          </div>
-        }
-      />
+      {/* 스크럼 생성 클라이언트 컴포넌트 */}
+      <ScrumGenerator />
     </Container>
   )
 }
