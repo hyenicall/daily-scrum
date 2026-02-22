@@ -27,6 +27,15 @@
         "shadcn@latest",
         "mcp"
       ]
+    },
+    "shrimp-task-manager": {
+      "command": "node",
+      "args": ["/Users/jihye/workspace/mcp-shrimp-task-manager/dist/index.js"],
+      "env": {
+        "DATA_DIR": "/Users/jihye/workspace/daily-scrum/shrimp_data",
+        "TEMPLATES_USE": "en",
+        "ENABLE_GUI": "true"
+      }
     }
   }
 }
