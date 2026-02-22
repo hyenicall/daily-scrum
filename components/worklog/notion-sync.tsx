@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Upload, Download, Copy, Check } from "lucide-react"
+import { Upload, Download, Copy, Check, RefreshCw, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 
 import type { WorkItem } from "@/types"
+import type { NotionSyncStatus } from "@/hooks/use-notion-sync"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
@@ -18,10 +19,11 @@ import {
 interface NotionSyncProps {
   date: string     // "YYYY-MM-DD"
   items: WorkItem[]
+  syncStatus: NotionSyncStatus
 }
 
-export function NotionSync({ date, items }: NotionSyncProps) {
-  // 업로드 상태
+export function NotionSync({ date, items, syncStatus }: NotionSyncProps) {
+  // 수동 동기화 상태
   const [uploadLoading, setUploadLoading] = useState(false)
 
   // 가져오기 Dialog 상태
@@ -120,8 +122,28 @@ export function NotionSync({ date, items }: NotionSyncProps) {
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {/* 업로드 버튼 */}
+    <div className="flex flex-wrap items-center gap-2">
+      {/* 자동 동기화 상태 인디케이터 */}
+      {syncStatus === "syncing" && (
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <RefreshCw className="size-3.5 animate-spin" />
+          Notion 동기화 중...
+        </span>
+      )}
+      {syncStatus === "synced" && (
+        <span className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+          <Check className="size-3.5" />
+          Notion 동기화됨
+        </span>
+      )}
+      {syncStatus === "error" && (
+        <span className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+          <AlertTriangle className="size-3.5" />
+          동기화 실패 — 수동 업로드
+        </span>
+      )}
+
+      {/* 수동 동기화 버튼 */}
       <Button
         variant="outline"
         size="sm"
@@ -133,7 +155,7 @@ export function NotionSync({ date, items }: NotionSyncProps) {
         ) : (
           <Upload className="mr-2 size-4" />
         )}
-        Notion에 업로드
+        수동 동기화
       </Button>
 
       {/* 가져오기 버튼 */}

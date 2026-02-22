@@ -39,14 +39,28 @@ export async function POST(request: Request) {
     )
   }
 
-  if (items.length === 0) {
-    return NextResponse.json(
-      { error: "업로드할 작업 항목이 없습니다." },
-      { status: 400 },
+  const databaseId = process.env.NOTION_DATABASE_ID
+
+  // 해당 날짜의 기존 항목 전체 조회 후 archive (upsert를 위한 replace-all 전략)
+  try {
+    const existingPages = await notion.dataSources.query({
+      data_source_id: databaseId,
+      filter: { property: "날짜", date: { equals: date } },
+    })
+    await Promise.allSettled(
+      existingPages.results.map((page) =>
+        notion.pages.update({ page_id: page.id, archived: true }),
+      ),
     )
+  } catch {
+    // archive 실패 시 이후 생성은 계속 진행
   }
 
-  const databaseId = process.env.NOTION_DATABASE_ID
+  // items가 없으면 archive만 수행하고 성공 반환
+  if (items.length === 0) {
+    const dbId = databaseId.replace(/-/g, "")
+    return NextResponse.json({ url: `https://notion.so/${dbId}` })
+  }
 
   /** WorkItem 1개를 데이터베이스 행(page)으로 생성 */
   const createRow = (item: WorkItem) =>

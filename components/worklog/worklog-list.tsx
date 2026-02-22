@@ -5,6 +5,7 @@ import { Plus, ClipboardList } from "lucide-react"
 
 import { useWorklogStore } from "@/stores/use-worklog-store"
 import type { WorkTag, WorkStatus } from "@/types"
+import { useNotionSync } from "@/hooks/use-notion-sync"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import {
@@ -32,6 +33,7 @@ export function WorklogList() {
   useEffect(() => setMounted(true), [])
 
   const items = mounted ? (getWorkLog(selectedDate)?.items ?? []) : []
+  const syncStatus = useNotionSync(selectedDate, items)
 
   const handleAdd = (values: WorkItemFormValues) => {
     addWorkItem(
@@ -98,7 +100,7 @@ export function WorklogList() {
 
       {/* Notion 연동 버튼 영역 */}
       <div className="border-t pt-4">
-        <NotionSync date={selectedDate} items={items} />
+        <NotionSync date={selectedDate} items={items} syncStatus={syncStatus} />
       </div>
     </div>
   )
