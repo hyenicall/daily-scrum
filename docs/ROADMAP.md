@@ -1,7 +1,7 @@
 # 프로젝트 로드맵
 
 > 마지막 업데이트: 2026-02-22
-> 버전: 1.0
+> 버전: 1.3
 > 기반 PRD: docs/PRD.md
 
 ---
@@ -179,19 +179,19 @@ gantt
 
 **기능 1: WorkItemForm - 작업 추가 폼**
 
-- [ ] `components/worklog/work-item-form.tsx` 생성 (Client Component)
+- [x] `components/worklog/work-item-form.tsx` 생성 (Client Component)
   - 구현 방법: React Hook Form + `workItemSchema` (`lib/validations/worklog.ts`에 이미 정의됨) 사용
   - 필드: `content` (Textarea), `tag` (Select), `status` (Select)
   - 제출 시 `useWorklogStore.addWorkItem(today, content, tag, status)` 호출
   - 관련 파일: `components/ui/form.tsx`, `components/ui/textarea.tsx`, `components/ui/select.tsx`
-- [ ] 태그 및 상태 Badge 색상 매핑 상수 정의
+- [x] 태그 및 상태 Badge 색상 매핑 상수 정의
   - 구현 방법: `lib/utils.ts` 또는 `components/worklog/work-item-badge.tsx`에 `cn()` 기반 variant 정의
   - `WorkTag` → 색상: `feature`(파랑), `bugfix`(빨강), `meeting`(보라), `review`(노랑), `etc`(회색)
   - `WorkStatus` → 색상: `done`(초록), `in-progress`(파랑), `blocked`(빨강)
 
 **기능 2: WorkItemCard - 작업 항목 카드**
 
-- [ ] `components/worklog/work-item-card.tsx` 생성 (Client Component)
+- [x] `components/worklog/work-item-card.tsx` 생성 (Client Component)
   - 구현 방법: shadcn/ui `Card` 기반, 인라인 편집(수정 모드 토글) 지원
   - 표시 내용: 작업 내용, 태그 Badge, 상태 Badge
   - 액션: 수정 버튼 → `updateWorkItem()`, 삭제 버튼 → `useConfirm` 훅으로 확인 후 `deleteWorkItem()` 호출
@@ -199,7 +199,7 @@ gantt
 
 **기능 3: WorklogList - 작업 목록**
 
-- [ ] `components/worklog/worklog-list.tsx` 생성 (Client Component)
+- [x] `components/worklog/worklog-list.tsx` 생성 (Client Component)
   - 구현 방법: `useWorklogStore`에서 오늘 날짜 워크로그 구독, 항목이 없으면 `EmptyState` 표시
   - 항목 없을 때: `EmptyState` (icon=ClipboardList) 재사용
   - 항목 있을 때: `WorkItemCard` 목록 렌더링
@@ -207,27 +207,101 @@ gantt
 
 **기능 4: DateSelector - 날짜 선택기**
 
-- [ ] `components/worklog/date-selector.tsx` 생성 (Client Component)
+- [x] `components/worklog/date-selector.tsx` 생성 (Client Component)
   - 구현 방법: shadcn/ui `Popover` + `Calendar` or 간단한 날짜 Input
   - 기본값: 오늘 날짜 (`new Date().toISOString().split("T")[0]`)
   - 날짜 변경 시 해당 날짜의 워크로그를 스토어에서 불러옴
 
 **기능 5: 홈 페이지 조립**
 
-- [ ] `src/app/page.tsx` 업데이트
+- [x] `src/app/page.tsx` 업데이트
   - 구현 방법: Server Component 유지, 내부에 `WorklogList` Client Component 삽입
   - "작업 추가" 버튼 → `WorkItemFormDialog` 다이얼로그 트리거로 교체
 
 #### 완료 기준 (Definition of Done)
 
-- [ ] 작업 항목 추가 → 목록에 즉시 반영
-- [ ] 작업 항목 수정 → 변경 사항 즉시 반영
-- [ ] 작업 항목 삭제 → `useConfirm` 확인 후 제거
-- [ ] 페이지 새로고침 후에도 localStorage에서 데이터 복원
-- [ ] 태그/상태 Badge가 색상으로 구분되어 표시
-- [ ] 모바일(375px)에서 레이아웃 깨짐 없음
-- [ ] 다크모드에서 정상 표시
-- [ ] TypeScript `any` 타입 없음, `pnpm build` 통과
+- [x] 작업 항목 추가 → 목록에 즉시 반영
+- [x] 작업 항목 수정 → 변경 사항 즉시 반영
+- [x] 작업 항목 삭제 → `useConfirm` 확인 후 제거
+- [x] 페이지 새로고침 후에도 localStorage에서 데이터 복원
+- [x] 태그/상태 Badge가 색상으로 구분되어 표시
+- [x] 모바일(375px)에서 레이아웃 깨짐 없음
+- [x] 다크모드에서 정상 표시
+- [x] TypeScript `any` 타입 없음, `pnpm build` 통과
+
+---
+
+### Notion 연동 (선행 구현) — 2026-02-22
+
+> PRD v1에서는 "제외 범위(v2 이후)"로 분류되었으나, 사용자 요청에 따라 MVP 단계에서 선행 구현되었습니다.
+> Phase 2 "노션 자동 업데이트" 항목의 핵심 기능을 포함합니다.
+
+**목표:** 홈(`/`) 워크로그 목록 하단에서 Notion 업로드 / 가져오기를 원클릭으로 실행할 수 있다.
+
+#### 구현 항목
+
+**기능 1: Notion 클라이언트 싱글톤 + 유틸**
+
+- [x] `lib/notion.ts` 생성 (서버사이드 전용)
+  - `@notionhq/client 5.9.0` 패키지 사용
+  - Notion 클라이언트 싱글톤 인스턴스 생성 (`NOTION_API_KEY` 환경변수 사용)
+  - `extractPageId(urlOrId: string): string` 유틸 — Notion 페이지 URL 또는 ID에서 순수 ID 추출
+
+**기능 2: Notion 업로드 API Route Handler**
+
+- [x] `src/app/api/notion/upload/route.ts` 생성
+  - `POST /api/notion/upload` — 날짜별 워크로그를 Notion 페이지로 생성
+  - 요청 바디: `{ date: string, items: WorkItem[] }`
+  - 동작: `NOTION_PARENT_PAGE_ID` 하위에 항상 새 페이지 생성 (기존 페이지 덮어쓰기 없음)
+  - 페이지 구성: 상태별 섹션 구분 (완료 / 진행중 / 블로킹)
+  - 응답: `{ url: string, pageId: string }`
+
+**기능 3: Notion 페이지 조회 API Route Handler**
+
+- [x] `src/app/api/notion/page/route.ts` 생성
+  - `GET /api/notion/page?pageId=<ID_또는_URL>` — Notion 페이지 내용 텍스트 반환
+  - `extractPageId()`로 URL/ID 정규화 후 Notion API 호출
+  - 응답: `{ content: string }` (텍스트 형식)
+
+**기능 4: NotionSync UI 컴포넌트**
+
+- [x] `components/worklog/notion-sync.tsx` 생성 (Client Component)
+  - "Notion에 업로드" 버튼: 작업 항목 없으면 `disabled`, 클릭 시 `POST /api/notion/upload` 호출
+    - 성공 시: `toast.success("Notion 페이지가 생성되었습니다", { action: { label: "열기", onClick: () => window.open(url) } })`
+    - 실패 시: `toast.error()`
+  - "Notion 가져오기" 버튼: Dialog 열기 → URL 또는 ID 입력 → `GET /api/notion/page` 호출
+    - 결과 표시 텍스트 영역 + 클립보드 복사 버튼 제공
+  - 관련 파일: `components/ui/dialog.tsx`, `components/ui/textarea.tsx`
+
+**기능 5: WorklogList에 NotionSync 통합**
+
+- [x] `components/worklog/worklog-list.tsx` 수정
+  - 작업 목록 하단(푸터 영역)에 `<NotionSync date={date} items={items} />` 추가
+
+#### 환경변수
+
+| 변수명 | 필수 여부 | 설명 |
+|--------|---------|------|
+| `NOTION_API_KEY` | Notion 연동 시 필수 | Notion Integration Token (`secret_...`) |
+| `NOTION_PARENT_PAGE_ID` | 업로드 시 필수 | 업로드 대상 Notion 페이지 ID 또는 URL |
+
+`.env.local` 파일에 추가:
+
+```bash
+NOTION_API_KEY=secret_...
+NOTION_PARENT_PAGE_ID=<페이지-ID-또는-URL>
+```
+
+#### 완료 기준 (Definition of Done)
+
+- [x] "Notion에 업로드" 버튼 클릭 시 Notion에 새 페이지 생성됨
+- [x] 업로드 성공 시 `toast.success()` + "열기" 액션 버튼 표시
+- [x] 작업 항목 없을 때 업로드 버튼 `disabled` 처리
+- [x] "Notion 가져오기" Dialog에서 URL/ID 입력 → 페이지 내용 텍스트 표시
+- [x] 가져오기 결과에 복사 버튼 제공
+- [x] `NOTION_API_KEY` 또는 `NOTION_PARENT_PAGE_ID` 미설정 시 명확한 에러 반환
+- [x] Playwright MCP E2E 테스트 통과
+- [x] `pnpm build` 통과
 
 ---
 
@@ -507,9 +581,21 @@ gantt
 - [ ] 슬랙 Incoming Webhook URL 환경변수 등록
 - [ ] `components/scrum/slack-send-button.tsx` UI 추가
 
-#### 노션 자동 업데이트
-- [ ] Notion API 연동 Route Handler 생성
-- [ ] Notion OAuth 또는 Integration Token 설정
+#### 노션 자동 업데이트 ✅ 선행 구현 완료 (2026-02-22)
+
+> MVP 단계에서 선행 구현되었습니다. 상세 내용은 "Notion 연동 (선행 구현)" 섹션을 참고하세요.
+
+- [x] `lib/notion.ts` — Notion 클라이언트 싱글톤 + `extractPageId` 유틸
+- [x] `src/app/api/notion/upload/route.ts` — `POST /api/notion/upload` Route Handler
+- [x] `src/app/api/notion/page/route.ts` — `GET /api/notion/page` Route Handler
+- [x] `components/worklog/notion-sync.tsx` — 업로드 / 가져오기 UI 컴포넌트
+- [x] `components/worklog/worklog-list.tsx` — `NotionSync` 통합 완료
+- [x] `@notionhq/client 5.9.0` 패키지 추가
+- [x] `.env.local.example`에 `NOTION_API_KEY`, `NOTION_PARENT_PAGE_ID` 추가
+
+**미구현 (v2에서 검토):**
+- [ ] Notion OAuth 연동 (현재는 Integration Token 방식)
+- [ ] 기존 Notion 페이지 업데이트 (현재는 항상 새 페이지 생성)
 
 #### 주간 회고 자동 생성
 - [ ] `/weekly` 페이지 신규 생성
@@ -623,11 +709,15 @@ graph TD
 | 변수명 | 필수 여부 | 설명 |
 |--------|---------|------|
 | `OPENAI_API_KEY` | 필수 (Day 3부터) | OpenAI API 인증 키 |
+| `NOTION_API_KEY` | Notion 연동 시 필수 | Notion Integration Token (`secret_...`) |
+| `NOTION_PARENT_PAGE_ID` | Notion 업로드 시 필수 | 업로드 대상 Notion 페이지 ID 또는 URL |
 
 `.env.local` 파일에 설정:
 
 ```bash
 OPENAI_API_KEY=sk-...
+NOTION_API_KEY=secret_...
+NOTION_PARENT_PAGE_ID=<페이지-ID-또는-URL>
 ```
 
 ---
@@ -635,7 +725,9 @@ OPENAI_API_KEY=sk-...
 ## 제외 범위 (Won't Have - v1)
 
 - 슬랙 웹훅 직접 전송 (클립보드 복사로 대체)
-- 노션 자동 업데이트 (클립보드 복사로 대체)
+- ~~노션 자동 업데이트~~ → **선행 구현 완료** (2026-02-22, "Notion 연동 (선행 구현)" 섹션 참고)
+  - Notion OAuth는 여전히 제외, Integration Token 방식으로 구현됨
+  - 기존 페이지 업데이트(upsert) 기능은 v2 검토
 - 주간 회고 자동 생성 (v2 검토)
 - 멀티 유저 / 팀 기능 (단일 사용자 MVP)
 - 알림 / 리마인더 (v2 검토)
@@ -665,3 +757,4 @@ OPENAI_API_KEY=sk-...
 | 2026-02-22 | 1.0 | 초기 작성 (PRD v1.0 기반) | PM |
 | 2026-02-22 | 1.1 | OpenAI API로 변경, Playwright MCP 테스트 섹션 추가 | PM |
 | 2026-02-22 | 1.2 | Day 0 (애플리케이션 골격 구축) 섹션 추가, 기존 구현 상태 체크 반영 | PM |
+| 2026-02-22 | 1.3 | Day 1 완료 기준 전체 체크 완료 반영; "Notion 연동 (선행 구현)" 섹션 신규 추가; Phase 2 노션 항목 선행 구현 완료 표시; 제외 범위에서 노션 자동 업데이트 선행 구현 완료로 변경; 환경변수 섹션에 Notion 관련 변수 추가 | PM |
