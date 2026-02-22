@@ -1,10 +1,7 @@
 import type { Metadata } from "next"
-import { History } from "lucide-react"
-import Link from "next/link"
 
 import { Container } from "@/components/layout/container"
-import { EmptyState } from "@/components/ui/empty-state"
-import { Button } from "@/components/ui/button"
+import { HistoryList } from "@/components/history/history-list"
 
 export const metadata: Metadata = {
   title: "기록 조회 | 데일리 스크럼",
@@ -22,17 +19,8 @@ export default function HistoryPage() {
         </p>
       </div>
 
-      {/* 기록 목록 영역 - 추후 HistoryList 클라이언트 컴포넌트로 교체 */}
-      <EmptyState
-        icon={History}
-        title="아직 기록이 없습니다"
-        description="워크로그를 작성하면 날짜별로 이곳에 기록이 쌓입니다"
-        action={
-          <Button asChild>
-            <Link href="/">오늘 워크로그 작성하기</Link>
-          </Button>
-        }
-      />
+      {/* 날짜별 기록 목록 */}
+      <HistoryList />
     </Container>
   )
 }
