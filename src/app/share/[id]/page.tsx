@@ -1,10 +1,7 @@
 import type { Metadata } from "next"
-import { Share2 } from "lucide-react"
-import Link from "next/link"
 
 import { Container } from "@/components/layout/container"
-import { EmptyState } from "@/components/ui/empty-state"
-import { Button } from "@/components/ui/button"
+import { SharedScrumView } from "@/components/share/shared-scrum-view"
 
 // 공유 페이지의 동적 메타데이터
 export const metadata: Metadata = {
@@ -32,17 +29,8 @@ export default async function SharePage({ params }: SharePageProps) {
         </p>
       </div>
 
-      {/* 공유 스크럼 내용 - 추후 SharedScrumView 서버 컴포넌트로 교체 */}
-      <EmptyState
-        icon={Share2}
-        title="스크럼을 찾을 수 없습니다"
-        description="링크가 올바른지 확인하거나 스크럼 작성자에게 문의하세요"
-        action={
-          <Button asChild variant="outline">
-            <Link href="/">홈으로 이동</Link>
-          </Button>
-        }
-      />
+      {/* 공유 스크럼 읽기 전용 뷰 */}
+      <SharedScrumView shareId={id} />
     </Container>
   )
 }

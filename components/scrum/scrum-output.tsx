@@ -3,6 +3,8 @@
 import { useScrumStore } from "@/stores/use-scrum-store"
 import { formatAsSlack, formatAsMarkdown } from "@/lib/scrum-formatter"
 import { CopyButton } from "./copy-button"
+import { FormatSelector } from "./format-selector"
+import { ShareButton } from "./share-button"
 import {
   Card,
   CardContent,
@@ -32,10 +34,14 @@ export function ScrumOutput({ date }: ScrumOutputProps) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">최종 스크럼 출력</CardTitle>
-          <CopyButton text={text} />
+          <div className="flex items-center gap-2">
+            <ShareButton date={date} />
+            <CopyButton text={text} />
+          </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-3">
+        <FormatSelector date={date} />
         <pre className="whitespace-pre-wrap font-mono text-sm bg-muted rounded-md p-4 overflow-x-auto">
           {text}
         </pre>
