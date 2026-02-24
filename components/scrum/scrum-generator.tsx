@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { ScrumPreview } from "./scrum-preview"
+import { ScrumOutput } from "./scrum-output"
 
 export function ScrumGenerator() {
   const [mounted, setMounted] = useState(false)
@@ -141,6 +142,9 @@ export function ScrumGenerator() {
 
       {/* 기존 스크럼이 있으면 미리보기/편집 UI 표시 */}
       {existingScrum && <ScrumPreview date={yesterdayStr} />}
+
+      {/* 스크럼이 있으면 포맷된 최종 출력 표시 */}
+      {existingScrum && <ScrumOutput date={yesterdayStr} />}
 
       {/* 스크럼이 없을 때 생성 유도 */}
       {!existingScrum && !isGenerating && (
