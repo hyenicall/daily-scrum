@@ -36,3 +36,18 @@
 - Claude API 모델: `claude-haiku-4-5` (빠르고 저렴)
 - AI API 키는 Route Handler에서만 사용 (클라이언트 노출 금지)
 - 상세 참조: `docs/patterns.md`
+
+## 구현 완료 현황 (2026-02-22 기준)
+
+- Day 0: 완료 (프로젝트 골격 전체)
+- Day 1: 완료 (WorkItemForm, WorkItemCard, WorklogList, DateSelector)
+- Notion 연동: 선행 구현 완료 (PRD v2 기능, 사용자 요청으로 조기 구현)
+  - `lib/notion.ts`, `api/notion/upload/route.ts`, `api/notion/page/route.ts`
+  - `components/worklog/notion-sync.tsx` (WorklogList 하단에 통합)
+  - 환경변수: `NOTION_API_KEY`, `NOTION_PARENT_PAGE_ID`
+  - 패키지: `@notionhq/client 5.9.0`
+
+## ROADMAP 업데이트 패턴
+
+- 선행 구현 시: Day 섹션 사이에 별도 섹션으로 추가 + Phase 2에 완료 표시 + 제외 범위에서 취소선 처리
+- 완료 항목은 `[ ]` → `[x]` 체크, 버전/날짜 변경 이력 필수 추가
