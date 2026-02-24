@@ -52,3 +52,6 @@ next-env.d.ts
 # 테스트 파일
 hook-test.txt
 test.txt
+
+# shrimp task manager
+shrimp_data/
