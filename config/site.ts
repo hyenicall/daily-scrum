@@ -16,6 +16,14 @@ export const siteConfig: SiteConfig = {
       title: "기록 조회",
       href: "/history",
     },
+    {
+      title: "주간 회고",
+      href: "/weekly",
+    },
+    {
+      title: "관리자",
+      href: "/admin",
+    },
   ],
   links: {
     github: "https://github.com",
