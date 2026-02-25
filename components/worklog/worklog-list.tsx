@@ -27,16 +27,21 @@ export function WorklogList() {
   )
   const [dialogOpen, setDialogOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const { getWorkLog, addWorkItem } = useWorklogStore()
+  const { getWorkLog, addWorkItem, fetchWorkLog } = useWorklogStore()
 
-  // Zustand persist + SSR hydration mismatch 방지
-  useEffect(() => setMounted(true), [])
+  // 마운트 후 데이터 패치
+  useEffect(() => {
+    setMounted(true)
+    fetchWorkLog(selectedDate).catch(() => {})
+  // fetchWorkLog는 안정적인 함수 참조이므로 의존성에서 제외
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate])
 
   const items = mounted ? (getWorkLog(selectedDate)?.items ?? []) : []
   const syncStatus = useNotionSync(selectedDate, items)
 
-  const handleAdd = (values: WorkItemFormValues) => {
-    addWorkItem(
+  const handleAdd = async (values: WorkItemFormValues) => {
+    await addWorkItem(
       selectedDate,
       values.content,
       values.tag as WorkTag,

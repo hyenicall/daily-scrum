@@ -1,14 +1,9 @@
-"use client"
-
-import { useState, useEffect } from "react"
 import { Share2 } from "lucide-react"
 import Link from "next/link"
 
-import { useScrumStore } from "@/stores/use-scrum-store"
 import { formatAsSlack } from "@/lib/scrum-formatter"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Button } from "@/components/ui/button"
-import { Spinner } from "@/components/ui/spinner"
 import { CopyButton } from "@/components/scrum/copy-button"
 import {
   Card,
@@ -16,27 +11,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import type { DailyScrum } from "@/types"
 
 interface SharedScrumViewProps {
-  shareId: string
+  /** 서버에서 조회한 스크럼 데이터 (없으면 null) */
+  scrum: DailyScrum | null
 }
 
-export function SharedScrumView({ shareId }: SharedScrumViewProps) {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => setMounted(true), [])
-
-  const scrum = useScrumStore((state) => state.getScrumByShareId(shareId))
-
-  // 마운트 전: SSR hydration 방지용 스피너
-  if (!mounted) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Spinner size="md" />
-      </div>
-    )
-  }
-
+// 순수 presentational Server Component — useScrumStore 의존 없음
+export function SharedScrumView({ scrum }: SharedScrumViewProps) {
   // 스크럼 없음: EmptyState
   if (!scrum) {
     return (
@@ -64,7 +47,7 @@ export function SharedScrumView({ shareId }: SharedScrumViewProps) {
       {/* 어제 한 일 */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">✅ 어제 한 일</CardTitle>
+          <CardTitle className="text-base">어제 한 일</CardTitle>
         </CardHeader>
         <CardContent>
           {scrum.yesterday.length > 0 ? (
@@ -84,7 +67,7 @@ export function SharedScrumView({ shareId }: SharedScrumViewProps) {
       {/* 오늘 할 일 */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">🔨 오늘 할 일</CardTitle>
+          <CardTitle className="text-base">오늘 할 일</CardTitle>
         </CardHeader>
         <CardContent>
           {scrum.today.length > 0 ? (
@@ -104,7 +87,7 @@ export function SharedScrumView({ shareId }: SharedScrumViewProps) {
       {/* 블로커 */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">⚠️ 블로커</CardTitle>
+          <CardTitle className="text-base">블로커</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">

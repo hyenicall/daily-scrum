@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { ScrumPreview } from "./scrum-preview"
 import { ScrumOutput } from "./scrum-output"
+import { SlackSendButton } from "./slack-send-button"
 
 export function ScrumGenerator() {
   const [mounted, setMounted] = useState(false)
@@ -56,7 +57,7 @@ export function ScrumGenerator() {
       }
 
       const data = (await response.json()) as GenerateScrumResponse
-      applyGeneratedScrum(
+      await applyGeneratedScrum(
         yesterdayStr,
         data.yesterday,
         data.today,
@@ -143,8 +144,13 @@ export function ScrumGenerator() {
       {/* 기존 스크럼이 있으면 미리보기/편집 UI 표시 */}
       {existingScrum && <ScrumPreview date={yesterdayStr} />}
 
-      {/* 스크럼이 있으면 포맷된 최종 출력 표시 */}
+      {/* 스크럼이 있으면 포맷된 최종 출력 + 슬랙 전송 버튼 표시 */}
       {existingScrum && <ScrumOutput date={yesterdayStr} />}
+      {existingScrum && (
+        <div className="flex justify-end">
+          <SlackSendButton date={yesterdayStr} />
+        </div>
+      )}
 
       {/* 스크럼이 없을 때 생성 유도 */}
       {!existingScrum && !isGenerating && (

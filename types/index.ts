@@ -70,6 +70,53 @@ export interface DailyScrum {
   blocker: string     // 기본값: "없음"
   format: ScrumFormat
   shareId: string     // 공유 링크용 고유 ID
+  userId?: string     // 팀 스크럼 조회 시 사용 (선택적)
+  createdAt: Date
+}
+
+// ============================================================
+// 사용자 프로필 타입
+// ============================================================
+
+export interface UserProfile {
+  id: string
+  email: string | null
+  displayName: string | null
+  createdAt: Date
+}
+
+// ============================================================
+// 팀 도메인 타입
+// ============================================================
+
+export type TeamMemberRole = "admin" | "member"
+
+export interface Team {
+  id: string
+  name: string
+  adminUserId: string
+}
+
+export interface TeamMember {
+  teamId: string
+  userId: string
+  role: TeamMemberRole
+  profile?: UserProfile
+}
+
+// ============================================================
+// 주간 회고 타입
+// ============================================================
+
+export interface WeeklyReview {
+  id: string
+  userId: string
+  weekStart: string   // "YYYY-MM-DD" 형식 (월요일 기준)
+  weekEnd: string     // "YYYY-MM-DD" 형식 (일요일 기준)
+  summary: string[]   // 주간 성과 요약
+  highlights: string[]  // 주요 하이라이트
+  improvements: string[]  // 개선 사항
+  nextWeekGoals: string[] // 다음 주 목표
   createdAt: Date
 }
 

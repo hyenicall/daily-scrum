@@ -13,11 +13,16 @@ import { HistoryDayCard } from "./history-day-card"
 
 export function HistoryList() {
   const [mounted, setMounted] = useState(false)
-  const { workLogs } = useWorklogStore()
-  const { getScrum } = useScrumStore()
+  const { workLogs, fetchWorkLogs } = useWorklogStore()
+  const { fetchScrums, getScrum } = useScrumStore()
 
-  // Zustand persist + SSR hydration mismatch 방지
-  useEffect(() => setMounted(true), [])
+  // 마운트 후 Supabase에서 데이터 패치
+  useEffect(() => {
+    setMounted(true)
+    fetchWorkLogs().catch(() => {})
+    fetchScrums().catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // 날짜 내림차순 정렬 (최신 날짜가 위로)
   const sortedDates = mounted

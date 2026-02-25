@@ -28,8 +28,8 @@ export function WorkItemCard({ item, date }: WorkItemCardProps) {
     confirmLabel: "삭제",
   })
 
-  const handleEdit = (values: WorkItemFormValues) => {
-    updateWorkItem(date, item.id, {
+  const handleEdit = async (values: WorkItemFormValues) => {
+    await updateWorkItem(date, item.id, {
       content: values.content,
       tag: values.tag as WorkTag,
       status: values.status as WorkStatus,
@@ -40,7 +40,7 @@ export function WorkItemCard({ item, date }: WorkItemCardProps) {
   const handleDelete = async () => {
     const ok = await confirm()
     if (ok) {
-      deleteWorkItem(date, item.id)
+      await deleteWorkItem(date, item.id)
     }
   }
 

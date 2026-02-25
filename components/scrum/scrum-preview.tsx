@@ -1,5 +1,6 @@
 "use client"
 
+import { useCallback } from "react"
 import { Plus, X } from "lucide-react"
 
 import { useScrumStore } from "@/stores/use-scrum-store"
@@ -29,46 +30,46 @@ export function ScrumPreview({ date }: ScrumPreviewProps) {
   const handleYesterdayChange = (index: number, value: string) => {
     const updated = [...scrum.yesterday]
     updated[index] = value
-    updateScrumField(date, "yesterday", updated)
+    updateScrumField(date, "yesterday", updated).catch(() => {})
   }
 
   /** today 배열의 특정 인덱스 텍스트 수정 */
   const handleTodayChange = (index: number, value: string) => {
     const updated = [...scrum.today]
     updated[index] = value
-    updateScrumField(date, "today", updated)
+    updateScrumField(date, "today", updated).catch(() => {})
   }
 
   /** yesterday 항목 추가 */
   const handleAddYesterday = () => {
-    updateScrumField(date, "yesterday", [...scrum.yesterday, ""])
+    updateScrumField(date, "yesterday", [...scrum.yesterday, ""]).catch(() => {})
   }
 
   /** today 항목 추가 */
   const handleAddToday = () => {
-    updateScrumField(date, "today", [...scrum.today, ""])
+    updateScrumField(date, "today", [...scrum.today, ""]).catch(() => {})
   }
 
   /** yesterday 항목 삭제 */
   const handleRemoveYesterday = (index: number) => {
     const updated = scrum.yesterday.filter((_, i) => i !== index)
-    updateScrumField(date, "yesterday", updated)
+    updateScrumField(date, "yesterday", updated).catch(() => {})
   }
 
   /** today 항목 삭제 */
   const handleRemoveToday = (index: number) => {
     const updated = scrum.today.filter((_, i) => i !== index)
-    updateScrumField(date, "today", updated)
+    updateScrumField(date, "today", updated).catch(() => {})
   }
 
   /** blocker 텍스트 수정 */
   const handleBlockerChange = (value: string) => {
-    updateScrumField(date, "blocker", value)
+    updateScrumField(date, "blocker", value).catch(() => {})
   }
 
   /** 포맷 변경 */
   const handleFormatChange = (value: ScrumFormat) => {
-    updateScrumField(date, "format", value)
+    updateScrumField(date, "format", value).catch(() => {})
   }
 
   return (
